@@ -1,0 +1,12 @@
+// filepath: /home/jaspreet/project/scalable_notification_system/notification_bacend/tsconfig.json
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "commonjs",
+    "target": "es6",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["server.ts", "routes/**/*.ts"]
+}
