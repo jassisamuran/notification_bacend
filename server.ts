@@ -1,9 +1,11 @@
 import express from 'express'
 import dotenv from 'dotenv'
+dotenv.config();
 import cors from 'cors'
 import routes from './routes'
+import connectDb from './modules/database/mongoose'
+connectDb();
 
-dotenv.config()
 const app=express()
 const PORT=process.env.PORT || 5000
 app.use(cors())
