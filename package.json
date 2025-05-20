@@ -10,7 +10,8 @@
     "mongoose": "^8.15.0",
     "rate-limiter-flexible": "^7.1.0",
     "redis": "^5.0.1",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "uuid": "^11.1.0"
   },
   "name": "notification-server",
   "description": "services to end email and sms notification",
