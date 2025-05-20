@@ -38,4 +38,4 @@ const startConsumer = async () => {
   }
 };
 
-startConsumer();
+export default startConsumer;

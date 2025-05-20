@@ -6,7 +6,8 @@ import routes from "./routes";
 import connectDb from "./modules/database/mongoose";
 import User from "./models/User";
 import { sendMessage, connectProducer } from "./kafka/producer";
-import connectAndConsumerMessage from "./kafka/consumer";
+import startConsumer from "./kafka/consumer";
+import startKafkaConsumers from "./kafka/main";
 
 connectDb();
 import notificationRoutes from "./src/routes/notificationRoutes";
@@ -27,8 +28,9 @@ app.listen(PORT, () => {
 });
 const start = async () => {
   try {
-    await connectProducer(); // ✅ Connect first
-    await connectAndConsumerMessage(); // ✅ Then connect consumer
+    await connectProducer();
+    await startConsumer();
+    await startKafkaConsumers();
     app.listen(5000, () => {
       console.log("Server is running on port 5000");
     });

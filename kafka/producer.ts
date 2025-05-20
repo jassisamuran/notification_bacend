@@ -21,7 +21,14 @@ export const sendMessage = async (message: string) => {
   // await connectProducer();
   await producer.send({
     topic: "notification",
-    messages: [{ value: JSON.stringify(message), key: Date.now().toString() }],
+    messages: [
+      {
+        value: JSON.stringify(message),
+        //  key: "kafKa", // Use a unique key for the target consumer
+      },
+    ],
+    // Optionally, you can set a partition if you want to target a specific partition
+    // partition: desiredPartitionNumber,
   });
 
   process.on("SIGTERM", async () => {
