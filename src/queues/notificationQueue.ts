@@ -53,9 +53,52 @@ export class NotificationQueue {
     await redisClient.del(`${this.processingQueueName}:${id}`);
     console.log(`Completed processing item ${id}`);
   }
-  async retry(item: QueueItem): Promise<void> {
+  async retry(item: QueueItem, delay: number = 60): Promise<void> {
     item.retryCount++;
     item.timestamp = Date.now();
-    // await e
+    await redisClient.del(`${this.processingQueueName}:${item.id}`);
+
+    const newPriorityqueue = item.priority + item.retryCount * delay; //check out this
+    if (item.retryCount < 5) {
+      await redisClient.lpush(this.deadLetterQueueName, JSON.stringify(item));
+      console.log(
+        `moved item ${item.id} form dead letter queue after ${item.retryCount} `
+      );
+    } else {
+      await redisClient.zadd(
+        this.queueName,
+        newPriorityqueue,
+        JSON.stringify(item)
+      );
+      console.log(
+        `Requeued item ${item.id} with new priority ${newPriorityqueue}, retry ${item.retryCount}`
+      );
+    }
+  }
+
+  async getlength(): Promise<number> {
+    return redisClient.zcard(this.queueName);
+  }
+
+  async recoveredStalledTasks(): Promise<number> {
+    const processingKeys = await redisClient.keys(
+      `${this.processingQueueName}:*`
+    );
+    let recovered = 0;
+
+    for (const key of processingKeys) {
+      const itemJson = await redisClient.get(key);
+      if (itemJson) {
+        const item: QueueItem = JSON.parse(itemJson);
+
+        // If the item has been processing for more than 10 minutes, recover it
+        if (Date.now() - item.timestamp > 10 * 60 * 1000) {
+          await this.retry(item);
+          recovered++;
+        }
+      }
+    }
+
+    return recovered;
   }
 }
