@@ -102,3 +102,7 @@ export class NotificationQueue {
     return recovered;
   }
 }
+export const emailQueue = new NotificationQueue("email");
+export const smsQueue = new NotificationQueue("sms");
+export const otpQueue = new NotificationQueue("otp");
+export const pushQueue = new NotificationQueue("push");
