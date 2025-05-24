@@ -12,7 +12,7 @@ interface OtpMessage {
 
 export async function startOtpConsumer() {
   await createKafkaConsumer(
-    "otp-service-group",
+    "otp-group-service",
     (message) => message.type === "otp",
     async (message) => {
       const otpMessage = message as unknown as OtpMessage;
