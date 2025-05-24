@@ -6,9 +6,10 @@ import routes from "./routes";
 import connectDb from "./modules/database/mongoose";
 import User from "./models/User";
 import { sendMessage, connectProducer } from "./kafka/producer";
-import startConsumer from "./kafka/consumer";
+// import startConsumer from "./kafka/consumer";
 import startKafkaConsumers from "./kafka/main";
 import redisClient from "./src/queues/redisClient";
+import startAllConsumers from "./src/consumers/index";
 
 connectDb();
 import notificationRoutes from "./src/routes/notificationRoutes";
@@ -30,8 +31,9 @@ app.listen(PORT, () => {
 const start = async () => {
   try {
     await connectProducer();
-    await startConsumer();
-    await startKafkaConsumers();
+    // await startConsumer();
+    startKafkaConsumers();
+    await startAllConsumers();
 
     await redisClient.connect();
 

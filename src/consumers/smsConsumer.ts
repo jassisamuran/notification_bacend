@@ -11,7 +11,7 @@ interface SmsService {
 
 export async function startSmsConsumer() {
   await createKafkaConsumer(
-    "sms-service-group",
+    "sms-group-service",
     (message) => message.type == "sms",
     async (message) => {
       const smsMessage = message as unknown as SmsService;

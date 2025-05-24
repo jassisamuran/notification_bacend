@@ -1,4 +1,5 @@
 import { createKafkaConsumer } from "./consumerFactory";
+import { smsQueue } from "../src/queues/notificationQueue";
 interface Message {
   type: string;
   [key: string]: any;
@@ -23,6 +24,8 @@ const customerConfigs: CustomerConfig[] = [
     filter: (message: Message) => message.type === "sms",
     process: async (message: Message) => {
       console.log("Processing sms message:", message);
+      const queueId = smsQueue.enqueue(message, message.priority);
+      console.log("this is id", queueId);
     },
   },
   {

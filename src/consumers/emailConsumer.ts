@@ -11,9 +11,9 @@ interface EmailService {
   variable?: Record<string, any>;
   priority?: string;
 }
-export async function startEmailCosumer() {
+export async function startEmailConsumer() {
   await createKafkaConsumer(
-    "email-service-group",
+    "email-group-service",
     (mesasage) => mesasage.type === "email",
     async (message) => {
       const emailMessage = message as unknown as EmailService;
