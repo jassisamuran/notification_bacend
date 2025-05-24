@@ -10,7 +10,7 @@ import { sendMessage, connectProducer } from "./kafka/producer";
 import startKafkaConsumers from "./kafka/main";
 import redisClient from "./src/queues/redisClient";
 import startAllConsumers from "./src/consumers/index";
-
+import { startWorkers } from "./src/workers/index";
 connectDb();
 import notificationRoutes from "./src/routes/notificationRoutes";
 const app = express();
@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/notifications", notificationRoutes);
-
+startWorkers();
 app.listen(PORT, () => {
   // (async () => {
   //   sendMessage("notification-service", "Hello from Kafka producer");
