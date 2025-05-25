@@ -24,7 +24,10 @@ export class EmailWorker {
           subject: item.payload.subject,
           body: item.payload.body,
         });
+<<<<<<< HEAD
         console.log("result", result);
+=======
+>>>>>>> origin/main
         // if (result) {
         // what will happen after this is it passed or not ;
         await emailQueue.complete(item.id);

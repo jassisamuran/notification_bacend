@@ -6,10 +6,11 @@ import routes from "./routes";
 import connectDb from "./modules/database/mongoose";
 import User from "./models/User";
 import { sendMessage, connectProducer } from "./kafka/producer";
-import startConsumer from "./kafka/consumer";
+// import startConsumer from "./kafka/consumer";
 import startKafkaConsumers from "./kafka/main";
 import redisClient from "./src/queues/redisClient";
-
+import startAllConsumers from "./src/consumers/index";
+import { startWorkers } from "./src/workers/index";
 connectDb();
 import notificationRoutes from "./src/routes/notificationRoutes";
 const app = express();
@@ -19,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/notifications", notificationRoutes);
-
+startWorkers();
 app.listen(PORT, () => {
   // (async () => {
   //   sendMessage("notification-service", "Hello from Kafka producer");
@@ -30,8 +31,9 @@ app.listen(PORT, () => {
 const start = async () => {
   try {
     await connectProducer();
-    await startConsumer();
-    await startKafkaConsumers();
+    // await startConsumer();
+    startKafkaConsumers();
+    await startAllConsumers();
 
     await redisClient.connect();
 
