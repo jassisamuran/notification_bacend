@@ -24,12 +24,8 @@
     "@types/kafka-node": "^3.0.0",
     "@types/kafkajs": "^1.9.0",
     "@types/mongoose": "^5.11.97",
-<<<<<<< HEAD
     "@types/node": "^22.15.21",
-=======
-    "@types/node": "^22.15.18",
     "@types/nodemailer": "^6.4.17",
->>>>>>> origin/main
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"

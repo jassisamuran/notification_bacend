@@ -1,6 +1,6 @@
 import { emailQueue } from "../queues/notificationQueue";
 import { sleep } from "../../utils/helper";
-import { sendEmail } from "../providers/emailProviders";
+import { sendEmail } from "../providers/emailProvider";
 export class EmailWorker {
   private running: boolean = false;
   private workerId: string;
@@ -19,15 +19,13 @@ export class EmailWorker {
         }
         console.log(`${this.workerId} processing email to: ${item.payload.to}`);
 
-        const result = await sendEmail({
-          to: item.payload.to,
-          subject: item.payload.subject,
-          body: item.payload.body,
-        });
-<<<<<<< HEAD
+        const result = await sendEmail(
+          item.payload.to,
+          item.payload.subject,
+          item.payload.body,
+          "email"
+        );
         console.log("result", result);
-=======
->>>>>>> origin/main
         // if (result) {
         // what will happen after this is it passed or not ;
         await emailQueue.complete(item.id);
