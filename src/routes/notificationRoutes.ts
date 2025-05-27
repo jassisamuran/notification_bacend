@@ -15,15 +15,7 @@ notificationRoutes.post(
         message: "Notification sent successfully",
         data: body,
       });
-      try {
-        if (body.type == "otp" || body.type == "email" || body.type == "sms") {
-          sendMessage(body);
-        } else {
-          throw new Error("It is not of correct type ");
-        }
-      } catch (err) {
-        console.log("Message type is not correct", err);
-      }
+      sendMessage(body);
     } catch (error) {
       console.error("Error sending notification:", error);
       res.status(500).send({

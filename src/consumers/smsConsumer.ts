@@ -22,8 +22,12 @@ export async function startSmsConsumer() {
         }
         const priority = smsMessage.priority || 10;
         const queueId = smsQueue.enqueue(smsMessage, priority);
+        console.log("SMS message queued with ID:", queueId);
         // logger
-      } catch (error) {}
+      } catch (error) {
+        console.error("Error processing SMS message:", error);
+        // logger
+      }
     }
   );
   //   logger
