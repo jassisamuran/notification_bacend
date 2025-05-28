@@ -18,6 +18,23 @@ export class NotificationQueue {
     this.processingQueueName = `processingQueue:${type}`;
     this.deadLetterQueueName = `deadLetterQueue:${type}`;
   }
+  private extractActualPayload(item: QueueItem): any {
+    let payload = item.payload;
+
+    // If payload has queue item structure, extract the actual data
+    while (
+      payload &&
+      typeof payload === "object" &&
+      "id" in payload &&
+      "retryCount" in payload &&
+      "timestamp" in payload
+    ) {
+      console.log("Unwrapping nested payload structure");
+      payload = payload.payload;
+    }
+
+    return payload;
+  }
 
   async enqueue(payload: any, priority: number = 0) {
     const id = uuidv4();
@@ -34,21 +51,53 @@ export class NotificationQueue {
     );
     return id;
   }
+  // async dequeue(): Promise<QueueItem | null> {
+  //   const result = await redisClient.zpopmin(this.queueName);
+  //   if (!result || result.length === 0) {
+  //     return null;
+  //   }
+  //   const itemJson = result[0]; // check this is correct or not
+  //   // console.log("item json is ", itemJson);/
+  //   const item: QueueItem = JSON.parse(itemJson);
+  //   await redisClient.set(
+  //     `${this.processingQueueName}:${item.id}`,
+  //     JSON.stringify(item),
+  //     "EX",
+  //     300
+  //   );
+  //   return item;
+  // }
   async dequeue(): Promise<QueueItem | null> {
-    const result = await redisClient.zpopmin(this.queueName);
-    if (!result || result.length === 0) {
+    try {
+      const result = await redisClient.zpopmin(this.queueName);
+      if (!result || result.length === 0) {
+        return null;
+      }
+
+      const itemJson = result[0];
+      const item: QueueItem = JSON.parse(itemJson);
+
+      // Extract actual payload and reconstruct item
+      const actualPayload = this.extractActualPayload(item);
+      const cleanItem: QueueItem = {
+        ...item,
+        payload: actualPayload,
+      };
+
+      await redisClient.set(
+        `${this.processingQueueName}:${item.id}`,
+        JSON.stringify(cleanItem),
+        "EX",
+        300
+      );
+
+      return cleanItem;
+    } catch (error) {
+      console.error("Error dequeuing item:", error);
       return null;
     }
-    const itemJson = result[0]; // check this is correct or not
-    const item: QueueItem = JSON.parse(itemJson);
-    await redisClient.set(
-      `${this.processingQueueName}:${item.id}`,
-      itemJson,
-      "EX",
-      300
-    );
-    return item;
   }
+
   async complete(id: string): Promise<void> {
     await redisClient.del(`${this.processingQueueName}:${id}`);
     console.log(`Completed processing item ${id}`);
@@ -58,8 +107,8 @@ export class NotificationQueue {
     item.timestamp = Date.now();
     await redisClient.del(`${this.processingQueueName}:${item.id}`);
 
-    const newPriorityqueue = item.priority + item.retryCount * delay; //check out this
-    if (item.retryCount < 5) {
+    const newPriorityqueue = item.priority + Math.pow(2, item.retryCount); //check out this
+    if (item.retryCount > 5) {
       await redisClient.lpush(this.deadLetterQueueName, JSON.stringify(item));
       console.log(
         `moved item ${item.id} form dead letter queue after ${item.retryCount} `
