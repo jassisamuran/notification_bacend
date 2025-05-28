@@ -14,7 +14,8 @@
     "redis": "^5.0.1",
     "socket.io": "^4.8.1",
     "twilio": "^5.6.1",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0"
   },
   "name": "notification-server",
   "description": "services to end email and sms notification",
