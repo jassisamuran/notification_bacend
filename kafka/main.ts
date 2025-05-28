@@ -26,16 +26,17 @@ const customerConfigs: CustomerConfig[] = [
     groupId: "sms-group-service",
     filter: (message: Message) => message.type === "sms",
     process: async (message: Message) => {
-      console.log("Processing sms message:", message);
+      // console.log("Processing sms message:", message);
       const queueId = smsQueue.enqueue(message, message.priority);
-      console.log("this is id", queueId);
+      // console.log("this is id", queueId);
     },
   },
   {
     groupId: "otp-service-group",
     filter: (message: Message) => message.type === "otp",
     process: async (message: Message) => {
-      console.log("Processing otp message:", message);
+      // console.log("Processing otp message:", message);
+      const queueId = emailQueue.enqueue(message, message.priority);
     },
   },
 ];

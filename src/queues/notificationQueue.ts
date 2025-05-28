@@ -84,11 +84,6 @@ export class NotificationQueue {
         payload: actualPayload,
       };
 
-      console.log(
-        "Dequeued item with clean payload:",
-        JSON.stringify(cleanItem, null, 2)
-      );
-
       await redisClient.set(
         `${this.processingQueueName}:${item.id}`,
         JSON.stringify(cleanItem),

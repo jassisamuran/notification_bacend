@@ -1,2 +1,1 @@
-// import {otpqqueue} from '../queue';
-// import sendSms from ''
+import { otpQueue } from "../queues/notificationQueue";

@@ -1,6 +1,7 @@
 import { smsQueue } from "../queues/notificationQueue";
 import { sleep } from "../../utils/helper";
 import { sendSms } from "../providers/smsProvider";
+import { fakeSmsProvider } from "../providers/fakeSmsProvider";
 
 export class smsWorker {
   private running: boolean = false;
@@ -23,9 +24,7 @@ export class smsWorker {
         console.info(
           `${this.workerId} processing  SMS to : ${item.payload.to}`
         );
-        console.info("item data", item.payload.to);
-        console.log("check here", item.payload);
-        const result = await sendSms(item.payload.to, item.payload.text);
+        const result = await fakeSmsProvider("sms", item.payload);
         if (result.success) {
           await smsQueue.complete(item.id);
           console.info(
@@ -35,9 +34,7 @@ export class smsWorker {
           console.warn(
             `${this.workerId} failed to send sms: to ${result.error}`
           );
-
-          const backoff = Math.pow(5, item.retryCount + 1);
-          await smsQueue.enqueue(item, backoff);
+          await smsQueue.retry(item, 10);
         }
       } catch (error) {
         console.error(`${this.workerId} encountered an error: ${error}`);

@@ -33,17 +33,12 @@ const start = async () => {
     await connectProducer();
     // await startConsumer();
     startKafkaConsumers();
-    await startAllConsumers();
 
     await redisClient.connect();
 
     app.listen(5000, () => {
       console.log("Server is running on port 5000");
     });
-
-    // Example usage
-    // console.log("this is a test");
-    // await sendMessage("Hello Kafka");
   } catch (err) {
     console.error(err);
   }

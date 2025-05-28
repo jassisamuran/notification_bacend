@@ -16,20 +16,20 @@ export function startWorkers() {
     const counts = calculateWorkerCount();
     console.log(`starting workers clusters ${JSON.stringify(counts)}`);
 
-    // for (let i = 0; i < counts.emailWorkers; i++) {
-    //   const worker = cluster.fork({
-    //     WORKER_TYPE: "email",
-    //     WORKER_ID: i.toString(),
-    //   });
-    //   console.info(`Started email worker ${i} with PID  ${worker.process.pid}`);
-    // }
-    for (let i = 0; i < counts.smsWorkers; i++) {
-      const woker = cluster.fork({
-        WORKER_TYPE: "sms",
+    for (let i = 0; i < counts.emailWorkers; i++) {
+      const worker = cluster.fork({
+        WORKER_TYPE: "email",
         WORKER_ID: i.toString(),
       });
-      console.info(`Started sms worker ${i} with PID ${woker.process.pid}`);
+      console.info(`Started email worker ${i} with PID  ${worker.process.pid}`);
     }
+    // for (let i = 0; i < counts.smsWorkers; i++) {
+    //   const woker = cluster.fork({
+    //     WORKER_TYPE: "sms",
+    //     WORKER_ID: i.toString(),
+    //   });
+    //   console.info(`Started sms worker ${i} with PID ${woker.process.pid}`);
+    // }
 
     cluster.on("exit", (worker, code, signal) => {
       console.log(
@@ -44,20 +44,22 @@ export function startWorkers() {
     // worker process
     const workerType = process.env.WORKER_TYPE;
     const workerId = process.env.WORKER_ID || "0";
-    // if (workerType == "email") {
-    //   const worker = new EmailWorker(workerId);
-    //   worker.start().catch((err) => {
-    //     console.error(`Email worker ${workerId} failed to restart ${err}`);
-    //     process.exit(1);
-    //   });
-    // } else
-    if (workerType == "sms") {
-      const worker = new smsWorker(workerId);
+    if (workerType == "email") {
+      const worker = new EmailWorker(workerId);
       worker.start().catch((err) => {
-        console.error(`Sms worker ${workerId} failed to restart ${err}`);
+        console.error(`Email worker ${workerId} failed to restart ${err}`);
         process.exit(1);
       });
-    } else {
+    }
+    // else
+    // if (workerType == "sms") {
+    //   const worker = new smsWorker(workerId);
+    //   worker.start().catch((err) => {
+    //     console.error(`Sms worker ${workerId} failed to restart ${err}`);
+    //     process.exit(1);
+    //   });
+    // }
+    else {
       console.error(`Unknown worker type : ${workerType}`);
       process.exit(1);
     }

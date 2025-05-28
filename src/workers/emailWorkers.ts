@@ -1,6 +1,6 @@
 import { emailQueue } from "../queues/notificationQueue";
 import { sleep } from "../../utils/helper";
-import { sendEmail } from "../providers/emailProvider";
+import { fakeEmailProvider } from "../providers/fakeEmailProvider";
 export class EmailWorker {
   private running: boolean = false;
   private workerId: string;
@@ -19,22 +19,18 @@ export class EmailWorker {
         }
         console.log(`${this.workerId} processing email to: ${item.payload.to}`);
 
-        const result = await sendEmail(
-          item.payload.to,
-          item.payload.subject,
-          item.payload.body,
-          "email"
-        );
-        console.log("result", result);
-        // if (result) {
-        // what will happen after this is it passed or not ;
-        await emailQueue.complete(item.id);
-
-        // }
-        // else{
-        // const backoff=Math.pow(5,item.retryCount+1);
-        // await emailQueue.retry(item,backoff).
-        // }
+        const result = await fakeEmailProvider("email", item.payload);
+        if (result.success) {
+          await emailQueue.complete(item.id);
+          console.info(
+            `${this.workerId} successfully send sms to ${item.payload.to}`
+          );
+        } else {
+          console.warn(
+            `${this.workerId} failed to send sms: to ${result.error}`
+          );
+          await emailQueue.retry(item, 60);
+        }
       } catch (error) {
         console.log(`${this.workerId} encounter  an error : ${error}`);
         await sleep(5000);

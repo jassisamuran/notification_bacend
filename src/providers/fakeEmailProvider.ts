@@ -1,23 +1,43 @@
-function fakeEmailProvider(type, payload) {
-  return new Promise((resolve, reject) => {
-    const delay = Math.floor(Math.random() * 1000); // simulate 0-1s delay
-
-    setTimeout(() => {
-      const shouldFail = Math.random() < 0.1; // 10% failure rate
-
-      if (shouldFail) {
-        console.error(
-          `[FAILURE] ${type.toUpperCase()} to ${payload.to}: ${payload.message}`
-        );
-        reject(new Error("Simulated failure"));
-      } else {
-        console.log(
-          `[SENT] ${type.toUpperCase()} to ${payload.to}: ${payload.message}`
-        );
-        resolve({ success: true });
-      }
-    }, delay);
-  });
+interface EmailPayload {
+  to: string;
+  text: string;
 }
 
-module.exports = fakeSmsProvider;
+type EmailType = string;
+
+export async function fakeEmailProvider(
+  type: EmailType,
+  payload: EmailPayload
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const result = await new Promise<{ success: boolean }>(
+      (resolve, reject) => {
+        const delay = Math.floor(Math.random() * 1000); // simulate 0-1s delay
+
+        setTimeout(() => {
+          const shouldFail = Math.random() < 0.1;
+
+          if (shouldFail) {
+            console.error(
+              `[FAILURE] ${type.toUpperCase()} to ${payload.to}: ${
+                payload.text
+              }`
+            );
+            reject({ success: false });
+          } else {
+            console.log(
+              `[SENT] ${type.toUpperCase()} to ${payload.to}: ${payload.text}`
+            );
+            resolve({ success: true });
+          }
+        }, delay);
+      }
+    );
+    return result;
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
