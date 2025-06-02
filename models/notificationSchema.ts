@@ -4,7 +4,9 @@ const notificationSchema = new mongoose.Schema({
   type: { type: String, enum: ["email", "sms", "whatsapp"], required: true },
   to: { type: String, required: true },
   from: String,
-  payload: mongoose.Schema.Types.Mixed,
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  priority: { type: Number, default: 0 },
+  message: { type: String, required: true },
 
   status: {
     type: String,

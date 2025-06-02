@@ -6,8 +6,8 @@ import os from "os";
 const calculateWorkerCount = () => {
   const cpucnt = os.cpus().length;
   return {
-    emailWorkers: Math.max(1, Math.floor(cpucnt * 0)),
-    smsWorkers: Math.max(1, Math.floor(cpucnt * 0.1)),
+    emailWorkers: Math.max(1, Math.floor(cpucnt * 0.3)),
+    smsWorkers: Math.max(1, Math.floor(cpucnt * 0.4)),
   };
 };
 
@@ -23,13 +23,13 @@ export function startWorkers() {
       });
       console.info(`Started email worker ${i} with PID  ${worker.process.pid}`);
     }
-    // for (let i = 0; i < counts.smsWorkers; i++) {
-    //   const woker = cluster.fork({
-    //     WORKER_TYPE: "sms",
-    //     WORKER_ID: i.toString(),
-    //   });
-    //   console.info(`Started sms worker ${i} with PID ${woker.process.pid}`);
-    // }
+    for (let i = 0; i < counts.smsWorkers; i++) {
+      const woker = cluster.fork({
+        WORKER_TYPE: "sms",
+        WORKER_ID: i.toString(),
+      });
+      console.info(`Started sms worker ${i} with PID ${woker.process.pid}`);
+    }
 
     cluster.on("exit", (worker, code, signal) => {
       console.log(
@@ -50,16 +50,13 @@ export function startWorkers() {
         console.error(`Email worker ${workerId} failed to restart ${err}`);
         process.exit(1);
       });
-    }
-    // else
-    // if (workerType == "sms") {
-    //   const worker = new smsWorker(workerId);
-    //   worker.start().catch((err) => {
-    //     console.error(`Sms worker ${workerId} failed to restart ${err}`);
-    //     process.exit(1);
-    //   });
-    // }
-    else {
+    } else if (workerType == "sms") {
+      const worker = new smsWorker(workerId);
+      worker.start().catch((err) => {
+        console.error(`Sms worker ${workerId} failed to restart ${err}`);
+        process.exit(1);
+      });
+    } else {
       console.error(`Unknown worker type : ${workerType}`);
       process.exit(1);
     }

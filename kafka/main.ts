@@ -1,6 +1,5 @@
 import { createKafkaConsumer } from "./consumerFactory";
-import { smsQueue } from "../src/queues/notificationQueue";
-import { emailQueue } from "../src/queues/notificationQueue";
+import { emailQueue, smsQueue } from "../src/queues/notificationQueue";
 interface Message {
   type: string;
   [key: string]: any;
@@ -17,26 +16,24 @@ const customerConfigs: CustomerConfig[] = [
     groupId: "email-group-service",
     filter: (message: Message) => message.type === "email",
     process: async (message: Message) => {
-      console.log("Processing email message:");
-      const queueId = await emailQueue.enqueue(message, 3);
-      console.log("id of emial queue is ", queueId);
+      console.log("Processing email message:", message);
+      await emailQueue.enqueue(message);
     },
   },
   {
     groupId: "sms-group-service",
     filter: (message: Message) => message.type === "sms",
     process: async (message: Message) => {
-      // console.log("Processing sms message:", message);
-      const queueId = smsQueue.enqueue(message, message.priority);
-      // console.log("this is id", queueId);
+      console.log("Processing sms message:", message);
+
+      await smsQueue.enqueue(message);
     },
   },
   {
     groupId: "otp-service-group",
     filter: (message: Message) => message.type === "otp",
     process: async (message: Message) => {
-      // console.log("Processing otp message:", message);
-      const queueId = emailQueue.enqueue(message, message.priority);
+      console.log("Processing otp message:", message);
     },
   },
 ];

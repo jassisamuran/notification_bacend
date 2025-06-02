@@ -10,6 +10,8 @@ import startConsumer from "./kafka/consumer";
 import startKafkaConsumers from "./kafka/main";
 import http from "http";
 import { Server } from "socket.io";
+import { startWorkers } from "./src/workers/index";
+import cluster from "cluster";
 
 connectDb();
 import notificationRoutes from "./src/routes/notificationRoutes";
@@ -41,11 +43,14 @@ app.use("/api/notifications", notificationRoutes);
 const start = async () => {
   try {
     await connectProducer();
-    await startConsumer();
-    await startKafkaConsumers();
-    server.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
+    // await startConsumer();
+    startKafkaConsumers();
+    startWorkers();
+    if (cluster.isPrimary) {
+      server.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+      });
+    }
   } catch (err) {
     console.error(err);
   }
