@@ -26,13 +26,13 @@ export const createKafkaConsumer = async (
 
         // Apply the filter
         if (filterFn(parsedMessage)) {
-          console.log(`Message matched filter for ${groupId}:`, parsedMessage);
+          // console.log(`Message matched filter for ${groupId}:`, parsedMessage);
           await processFn(parsedMessage);
         } else {
-          console.log(`Message did not match filter for ${groupId}, skipping`);
+          // console.log(`Message did not match filter for ${groupId}, skipping`);
         }
       } catch (error) {
-        console.error(`Error processing message in ${groupId}:`, error);
+        // console.error(`Error processing message in ${groupId}:`, error);
       }
     },
   });
