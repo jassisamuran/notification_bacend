@@ -38,28 +38,14 @@ io.on("connection", (socket) => {
 });
 app.use("/api/notifications", notificationRoutes);
 
-// app.listen(PORT, () => {
-//   // (async () => {
-//   //   sendMessage("notification-service", "Hello from Kafka producer");
-//   //   // console.log("User created:", await User.find());+
-//   //   console.log(`Server is running on port ${PORT}`);
-//   // })();
-// });
-server.listen(5000, () => {
-  console.log("Server running on http://localhost:5000");
-});
 const start = async () => {
   try {
     await connectProducer();
     await startConsumer();
     await startKafkaConsumers();
-    app.listen(4000, () => {
-      console.log("Server is running on port 4000");
+    server.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
     });
-
-    // Example usage
-    // console.log("this is a test");
-    // await sendMessage("Hello Kafka");
   } catch (err) {
     console.error(err);
   }
