@@ -1,58 +1,68 @@
+// server.ts
+
 import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import cors from "cors";
-import routes from "./routes";
 import connectDb from "./modules/database/mongoose";
-import User from "./models/User";
-import { sendMessage, connectProducer } from "./kafka/producer";
-import startConsumer from "./kafka/consumer";
+import { connectProducer } from "./kafka/producer";
 import startKafkaConsumers from "./kafka/main";
 import http from "http";
 import { Server } from "socket.io";
-import { startWorkers } from "./src/workers/index";
-import cluster from "cluster";
-
-connectDb();
 import notificationRoutes from "./src/routes/notificationRoutes";
+import { startWorkers } from "./src/workers/index";
 const app = express();
-const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
-io.on("connection", (socket) => {
-  console.log("client connected", socket.id);
-  socket.on("message", (data) => {
-    console.log("Message from client", data);
-    socket.broadcast.emit("message", data);
-  });
-  socket.on("disconnect", () => {
-    console.log("client disconnected", socket.id);
-  });
-});
 app.use("/api/notifications", notificationRoutes);
 
-const start = async () => {
+const PORT = process.env.PORT || 5001;
+let users = 0;
+async function start() {
   try {
+    await connectDb();
     await connectProducer();
-    // await startConsumer();
-    startKafkaConsumers();
-    startWorkers();
-    if (cluster.isPrimary) {
-      server.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
-      });
-    }
-  } catch (err) {
-    console.error(err);
+    await startKafkaConsumers();
+    console.log("✅ Kafka and DB connected");
+  } catch (error) {
+    console.error("❌ Startup failed:", error);
+    process.exit(1);
   }
-};
-start();
+}
+
+if (process.env.WORKER_TYPE === "email" || process.env.WORKER_TYPE === "sms") {
+  // Email or SMS worker - no HTTP or socket.io server
+  startWorkers(); // your existing workers code from src/workers/index.ts
+} else {
+  // Run Socket.IO server (single instance, no cluster)
+  const server = http.createServer(app);
+  const io = new Server(server, {
+    cors: {
+      origin: "http://localhost:3000",
+      methods: ["GET", "POST"],
+    },
+    transports: ["websocket"], // use websocket transport only
+  });
+
+  io.on("connection", (socket) => {
+    users++;
+    console.log("✅ client connected", socket.id, users);
+
+    socket.on("message", (data) => {
+      console.log("📩 Message:", data);
+      socket.emit("message", data + "k,k");
+      socket.broadcast.emit("message", data + "k,k");
+    });
+
+    socket.on("disconnect", () => {
+      users--;
+      console.log("❌ client disconnected", socket.id, users);
+    });
+  });
+
+  server.listen(PORT, () => {
+    console.log(`🟢 Socket.IO server listening on port ${PORT}`);
+  });
+
+  start();
+}
