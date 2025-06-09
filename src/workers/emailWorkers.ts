@@ -2,7 +2,8 @@ import { emailQueue } from "../queues/notificationQueue";
 import { sleep } from "../../utils/helper";
 import { fakeEmailProvider } from "../providers/fakeEmailProvider";
 import Notification from "../../models/notificationSchema";
-
+// import { getSocketIO } from "../../io";
+let count = 0;
 export class EmailWorker {
   private running: boolean = false;
   private workerId: string;
@@ -10,6 +11,11 @@ export class EmailWorker {
     this.workerId = `email-worker-${workerId}`;
   }
   async start() {
+    // const io = getSocketIO();
+    // if (!io) {
+    // console.warn("⚠️ Socket.IO not initialized yet");
+    // return;
+    // }
     this.running = true;
     console.log(`Starting ${this.workerId}`);
     while (this.running) {
@@ -20,23 +26,25 @@ export class EmailWorker {
           await sleep(1000);
           continue;
         }
-        await Notification.updateOne(
-          { email: `${item.payload.from}` },
-          { status: "processing" }
-        );
+        // await Notification.updateOne(
+        //   { email: `${item.payload.from}` },
+        //   { status: "processing" }
+        // );
 
         console.log(`${this.workerId} processing email to: ${item.payload.to}`);
 
         const result = await fakeEmailProvider("email", item.payload);
         if (result.success) {
           await emailQueue.complete(item.id);
-          await Notification.updateOne(
-            { email: `${item.payload.from}` },
-            { status: "completed" }
-          );
+          // await Notification.updateOne(
+          //   { email: `${item.payload.from}` },
+          //   { status: "completed" }
+          // );
           console.info(
             `${this.workerId} successfully send sms to ${item.payload.to}`
           );
+          // count++;
+          // io.emit("count", count);
         } else {
           console.warn(
             `${this.workerId} failed to send email: to ${result.error}`

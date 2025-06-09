@@ -15,6 +15,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api/notifications", notificationRoutes);
+import { setSocketIO } from "./io"; // path to io.ts
 
 const PORT = process.env.PORT || 5001;
 let users = 0;
@@ -31,10 +32,9 @@ async function start() {
 }
 
 if (process.env.WORKER_TYPE === "email" || process.env.WORKER_TYPE === "sms") {
-  // Email or SMS worker - no HTTP or socket.io server
-  startWorkers(); // your existing workers code from src/workers/index.ts
+  startWorkers();
+  console.log("worker is started");
 } else {
-  // Run Socket.IO server (single instance, no cluster)
   const server = http.createServer(app);
   const io = new Server(server, {
     cors: {
@@ -44,6 +44,7 @@ if (process.env.WORKER_TYPE === "email" || process.env.WORKER_TYPE === "sms") {
     transports: ["websocket"], // use websocket transport only
   });
 
+  setSocketIO(io);
   io.on("connection", (socket) => {
     users++;
     console.log("✅ client connected", socket.id, users);
