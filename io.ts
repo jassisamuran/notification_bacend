@@ -9,4 +9,3 @@ export const setSocketIO = (ioInstance: Server) => {
 export const getSocketIO = () => {
   return io;
 };
-    

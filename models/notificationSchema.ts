@@ -1,19 +1,17 @@
 import mongoose from "mongoose";
 
 const notificationSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    enum: ["email", "sms", "whatsapp"],
-    required: true,
-  },
+  type: { type: String, enum: ["email", "sms", "whatsapp"], required: true },
   to: { type: String, required: true },
   from: String,
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  priority: { type: Number, default: 10 },
+  priority: { type: Number, default: 0 },
+
   message: { type: String, required: true },
 
   status: {
     type: String,
+
     enum: ["pending", "queued", "processing", "sent", "failed", "dead-letter"],
     default: "pending",
   },

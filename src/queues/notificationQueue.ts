@@ -1,5 +1,6 @@
 import redisClient from "./redisClient";
 import { v4 as uuidv4 } from "uuid";
+import Notification from "../../models/notificationSchema";
 interface QueueItem {
   id: string;
   payload: any;
@@ -45,8 +46,7 @@ export class NotificationQueue {
       timestamp: Date.now(),
       priority: priority,
     };
-<<<<<<< Updated upstream
-=======
+
     // Save to MongoDB
     // Ensure all required fields are present and types match the Notification schema
     try {
@@ -62,7 +62,7 @@ export class NotificationQueue {
     } catch (err) {
       console.error("Error updating MongoDB status to queue:", err);
     }
->>>>>>> Stashed changes
+
     await redisClient.zadd(this.queueName, priority, JSON.stringify(item));
     console.log(
       `Added item ${id} to queue in ${this.queueName} with priority ${priority}`
@@ -189,7 +189,7 @@ export class NotificationQueue {
   }
 
   async getlength(): Promise<number> {
-    return redisClient.zcard(this.queueName);
+    return await redisClient.zcard(this.queueName);
   }
 
   async recoveredStalledTasks(): Promise<number> {

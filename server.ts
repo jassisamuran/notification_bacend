@@ -1,46 +1,73 @@
+// server.ts
+
 import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import cors from "cors";
-import routes from "./routes";
 import connectDb from "./modules/database/mongoose";
-import User from "./models/User";
-import { sendMessage, connectProducer } from "./kafka/producer";
-// import startConsumer from "./kafka/consumer";
+import { connectProducer } from "./kafka/producer";
 import startKafkaConsumers from "./kafka/main";
-import redisClient from "./src/queues/redisClient";
-import startAllConsumers from "./src/consumers/index";
-import { startWorkers } from "./src/workers/index";
-connectDb();
+import http from "http";
+import { Server } from "socket.io";
 import notificationRoutes from "./src/routes/notificationRoutes";
+import { startWorkers } from "./src/workers/index";
 const app = express();
-const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 app.use("/api/notifications", notificationRoutes);
-startWorkers();
-app.listen(PORT, () => {
-  // (async () => {
-  //   sendMessage("notification-service", "Hello from Kafka producer");
-  //   // console.log("User created:", await User.find());
-  //   console.log(`Server is running on port ${PORT}`);
-  // })();
-});
-const start = async () => {
+import { setSocketIO } from "./io"; // path to io.ts
+
+const PORT = process.env.PORT || 5001;
+let users = 0;
+async function start() {
   try {
+    await connectDb();
     await connectProducer();
-    // await startConsumer();
-    startKafkaConsumers();
-
-    await redisClient.connect();
-
-    app.listen(5000, () => {
-      console.log("Server is running on port 5000");
-    });
-  } catch (err) {
-    console.error(err);
+    await startKafkaConsumers();
+    console.log("✅ Kafka and DB connected");
+  } catch (error) {
+    console.error("❌ Startup failed:", error);
+    process.exit(1);
   }
-};
-start();
+}
+
+if (process.env.WORKER_TYPE === "email" || process.env.WORKER_TYPE === "sms") {
+  (async () => {
+    await start();
+    startWorkers();
+  })();
+
+  console.log("worker is started");
+} else {
+  const server = http.createServer(app);
+  const io = new Server(server, {
+    cors: {
+      origin: "http://localhost:3000",
+      methods: ["GET", "POST"],
+    },
+    transports: ["websocket"], // use websocket transport only
+  });
+
+  setSocketIO(io);
+  io.on("connection", (socket) => {
+    users++;
+    console.log("✅ client connected", socket.id, users);
+
+    socket.on("message", (data) => {
+      console.log("📩 Message:", data);
+      socket.emit("message", data + "k,k");
+      socket.broadcast.emit("message", data + "k,k");
+    });
+
+    socket.on("disconnect", () => {
+      users--;
+      console.log("❌ client disconnected", socket.id, users);
+    });
+  });
+
+  server.listen(PORT, () => {
+    console.log(`🟢 Socket.IO server listening on port ${PORT}`);
+  });
+
+  start();
+}
