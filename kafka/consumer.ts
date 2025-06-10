@@ -1,3 +1,4 @@
+import { smsQueue } from "../src/queues/notificationQueue";
 import kafka from "./kafka";
 const consumer = kafka.consumer({
   groupId: "kafKa",
@@ -21,6 +22,7 @@ const startConsumer = async () => {
         try {
           const value = message.value?.toString();
           console.log("Received message:", value);
+          console.log(value);
         } catch (error) {
           console.error("Failed to process message:", error);
         }
