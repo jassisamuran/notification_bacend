@@ -45,6 +45,24 @@ export class NotificationQueue {
       timestamp: Date.now(),
       priority: priority,
     };
+<<<<<<< Updated upstream
+=======
+    // Save to MongoDB
+    // Ensure all required fields are present and types match the Notification schema
+    try {
+      if (payload.notificationId) {
+        const result = await Notification.updateOne(
+          { _id: payload.notificationId },
+          { $set: { status: "queue" } }
+        );
+        console.log("MongoDB updated with status=queue:", result);
+      } else {
+        console.warn("Missing notificationId in payload, MongoDB not updated");
+      }
+    } catch (err) {
+      console.error("Error updating MongoDB status to queue:", err);
+    }
+>>>>>>> Stashed changes
     await redisClient.zadd(this.queueName, priority, JSON.stringify(item));
     console.log(
       `Added item ${id} to queue in ${this.queueName} with priority ${priority}`
@@ -99,9 +117,44 @@ export class NotificationQueue {
   }
 
   async complete(id: string): Promise<void> {
-    await redisClient.del(`${this.processingQueueName}:${id}`);
-    console.log(`Completed processing item ${id}`);
+    try {
+      const itemJson = await redisClient.get(
+        `${this.processingQueueName}:${id}`
+      );
+
+      if (!itemJson) {
+        console.warn(`No item found in processing queue for id ${id}`);
+        return;
+      }
+
+      const item: QueueItem = JSON.parse(itemJson);
+      const payload = item.payload;
+
+      // Clean up Redis
+      await redisClient.del(`${this.processingQueueName}:${id}`);
+      console.log(`Completed processing item ${id}`);
+
+      // Update MongoDB status
+      const notificationId = payload?.notificationId || payload?._id;
+      if (notificationId) {
+        const result = await Notification.updateOne(
+          { _id: notificationId },
+          { $set: { status: "sent" } }
+        );
+        console.log(
+          `MongoDB updated with status=sent for ${notificationId}:`,
+          result
+        );
+      } else {
+        console.warn(
+          "No notificationId/_id found in payload; skipping MongoDB update."
+        );
+      }
+    } catch (error) {
+      console.error(`Error completing item ${id}:`, error);
+    }
   }
+
   async retry(item: QueueItem, delay: number = 60): Promise<void> {
     item.retryCount++;
     item.timestamp = Date.now();
@@ -110,18 +163,28 @@ export class NotificationQueue {
     const newPriorityqueue = item.priority + Math.pow(2, item.retryCount); //check out this
     if (item.retryCount > 5) {
       await redisClient.lpush(this.deadLetterQueueName, JSON.stringify(item));
-      console.log(
-        `moved item ${item.id} form dead letter queue after ${item.retryCount} `
-      );
+      console.log(`Moved item ${item.id} to dead letter queue`);
+
+      if (item.payload.notificationId || item.payload._id) {
+        await Notification.updateOne(
+          { _id: item.payload.notificationId || item.payload._id },
+          { $set: { status: "dead-letter" } }
+        );
+      }
     } else {
       await redisClient.zadd(
         this.queueName,
         newPriorityqueue,
         JSON.stringify(item)
       );
-      console.log(
-        `Requeued item ${item.id} with new priority ${newPriorityqueue}, retry ${item.retryCount}`
-      );
+      console.log(`Requeued item ${item.id} with priority ${newPriorityqueue}`);
+
+      if (item.payload.notificationId || item.payload._id) {
+        await Notification.updateOne(
+          { _id: item.payload.notificationId || item.payload._id },
+          { $set: { status: "retry" } }
+        );
+      }
     }
   }
 

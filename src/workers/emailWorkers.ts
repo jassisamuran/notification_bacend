@@ -1,6 +1,12 @@
 import { emailQueue } from "../queues/notificationQueue";
 import { sleep } from "../../utils/helper";
 import { fakeEmailProvider } from "../providers/fakeEmailProvider";
+<<<<<<< Updated upstream
+=======
+import Notification from "../../models/notificationSchema";
+import { getSocketIO } from "../../io";
+let count = 0;
+>>>>>>> Stashed changes
 export class EmailWorker {
   private running: boolean = false;
   private workerId: string;
@@ -25,6 +31,16 @@ export class EmailWorker {
           console.info(
             `${this.workerId} successfully send sms to ${item.payload.to}`
           );
+<<<<<<< Updated upstream
+=======
+          count++;
+          // io.emit("count", count);
+
+          process.send?.({
+            type: "socket_emit",
+            data: { event: "count", value: count },
+          });
+>>>>>>> Stashed changes
         } else {
           console.warn(
             `${this.workerId} failed to send sms: to ${result.error}`
