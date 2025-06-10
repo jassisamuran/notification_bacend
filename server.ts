@@ -32,7 +32,11 @@ async function start() {
 }
 
 if (process.env.WORKER_TYPE === "email" || process.env.WORKER_TYPE === "sms") {
-  startWorkers();
+  (async () => {
+    await start();
+    startWorkers();
+  })();
+
   console.log("worker is started");
 } else {
   const server = http.createServer(app);

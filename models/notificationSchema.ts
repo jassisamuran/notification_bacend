@@ -6,12 +6,14 @@ const notificationSchema = new mongoose.Schema({
   from: String,
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   priority: { type: Number, default: 0 },
+
   message: { type: String, required: true },
 
   status: {
     type: String,
-    enum: ["queued", "processing", "sent", "failed"],
-    default: "queued",
+
+    enum: ["pending", "queued", "processing", "sent", "failed", "dead-letter"],
+    default: "pending",
   },
 
   deliveryResult: {

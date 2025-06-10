@@ -17,7 +17,7 @@ export const sendMessage = async (message: string) => {
     topic: "notification",
     messages: [
       {
-        value: JSON.stringify(message),
+        value: message,
         //  key: "kafKa", // Use a unique key for the target consumer
       },
     ],

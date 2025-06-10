@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 
 const userRequests: { [key: string]: number[] } = {};
 const window_time = Number(process.env.WINDOW_TIME) || 60000; // default 1 minute
-const max_requests = Number(process.env.MAX_REQUESTS) || 500; // default 5 requests
+const max_requests = Number(process.env.MAX_REQUESTS) || 20000000; // default 5 requests
 
 const rateLimiter = (req: Request, res: Response, next: NextFunction): void => {
   const userId = String(req.body.userId);

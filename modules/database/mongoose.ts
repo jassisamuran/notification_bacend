@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const MONDODB_URI = process.env.MONGODB_URI;
+const MONDODB_URI = "mongodb://127.0.0.1:27017/notifications";
 if (!MONDODB_URI) {
   throw new Error("MONGODB_URI environment variable is not defined");
 }

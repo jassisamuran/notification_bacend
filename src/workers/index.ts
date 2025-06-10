@@ -3,7 +3,7 @@ import { EmailWorker } from "./emailWorkers";
 import { smsWorker } from "./smsWorkers";
 import cluster from "cluster";
 import os from "os";
-
+import { getSocketIO } from "../../io";
 const calculateWorkerCount = () => {
   const cpucnt = os.cpus().length;
   return {
@@ -14,6 +14,14 @@ const calculateWorkerCount = () => {
 
 export function startWorkers() {
   if (cluster.isPrimary) {
+    // In server.ts (inside cluster.isPrimary block)
+    cluster.on("message", (worker, message: any) => {
+      if (message.type === "socket_emit") {
+        const io = getSocketIO();
+        io?.emit(message.data.event, message.data.value);
+      }
+    });
+
     const counts = calculateWorkerCount();
     console.log(`🧠 Starting worker clusters: ${JSON.stringify(counts)}`);
 
