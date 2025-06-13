@@ -1,32 +1,34 @@
 import Redis from "ioredis";
+import redisClient from "../queues/redisClient";
 import { EventEmitter } from "events";
 import { timeStamp } from "console";
 import { pipeline } from "stream";
-export default class NotificationMetricsService extends EventEmitter {
+class NotificationMetricsService extends EventEmitter {
   private redis: Redis;
   private metricsCache: Map<String, any> = new Map();
   private lastUpdate = Date.now();
 
-  //   constructor(redisConfig?: any) {
-  //     super();
-  //     this.redis = new Redis(
-  //       redisConfig || {
-  //         host: "localhost",
-  //         port: 6379,
-  //         retryDelayOnFailover: 100,
-  //         lazyConnect: true,
-  //       }
-  //     );
-  //   }
+  constructor() {
+    super();
+    // this.redis = new Redis(
+    //   redisConfig || {
+    //     host: "localhost",
+    //     port: 6379,
+    //     retryDelayOnFailover: 100,
+    //     lazyConnect: true,
+    //   }
+    // );
+    this.redis = redisClient;
+  }
 
   async incrementQueued(type: "email" | "sms" | "otp" | "push") {
     const pipeline = this.redis.pipeline();
     const now = Date.now();
     const day = Math.floor((now / 1000) * 60 * 60 * 24);
 
-    pipeline.incr(`notification:${type}:queued`);
-    pipeline.incr(`notification:queued:day:${day}`);
-    pipeline.expire(`notification:queued:day:${day}`, 24 * 60 * 60);
+    pipeline.incr(`notifications:${type}:queued`);
+    pipeline.incr(`notifications:queued:day:${day}`);
+    pipeline.expire(`notifications:queued:day:${day}`, 24 * 60 * 60);
 
     await pipeline.exec();
     this.emit("queue", { type, timeStamp: now });
@@ -35,7 +37,7 @@ export default class NotificationMetricsService extends EventEmitter {
   async increamentPocessing(type: "email" | "sms" | "otp" | "sms") {
     const pipeline = this.redis.pipeline();
     const now = Date.now();
-    pipeline.incr(`notification:${type}:processing`);
+    pipeline.incr(`notifications:${type}:processing`);
     this.emit("processing", { type, timeStamp: now });
   }
 
@@ -101,7 +103,10 @@ export default class NotificationMetricsService extends EventEmitter {
     this.emit(`queueSizeUpdate`, { type, size, timeStamp: Date.now() });
   }
 
-  async updatedQueueSize(type: "email" | "sms" | "otp" | "push", size: number) {
+  async processingQueueSize(
+    type: "email" | "sms" | "otp" | "push",
+    size: number
+  ) {
     await this.redis.set(`notifications:${type}:processing_size`, size);
   }
   async updateDeadLetterQueueSize(
@@ -226,5 +231,4 @@ export default class NotificationMetricsService extends EventEmitter {
     this.emit("failure", { type, error, timestamp: now });
   }
 }
-export 
- NotificationMetricsService;
+export default NotificationMetricsService;

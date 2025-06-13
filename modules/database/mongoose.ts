@@ -6,7 +6,7 @@ if (!MONDODB_URI) {
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(MONDODB_URI);
+    await mongoose.connect(MONDODB_URI, { maxPoolSize: 200 });
     console.log("MongoDB connected");
   } catch (error) {
     console.error("MongoDB connection error:", error);

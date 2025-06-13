@@ -7,8 +7,8 @@ import { getSocketIO } from "../../io";
 const calculateWorkerCount = () => {
   const cpucnt = os.cpus().length;
   return {
-    emailWorkers: Math.max(1, Math.floor(cpucnt * 0.3)),
-    smsWorkers: Math.max(1, Math.floor(cpucnt * 0.4)),
+    emailWorkers: Math.max(1, Math.floor(cpucnt * 0.8)),
+    smsWorkers: Math.max(1, Math.floor(cpucnt * 0.1)),
   };
 };
 

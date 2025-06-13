@@ -1,23 +1,29 @@
 import redisClient from "./redisClient";
 import { v4 as uuidv4 } from "uuid";
 import Notification from "../../models/notificationSchema";
+import NotificationMetricsService from "../services/NotificationMetricsService";
 interface QueueItem {
   id: string;
   payload: any;
   retryCount: number;
   timestamp: number;
   priority: number;
+  type?: "email" | "sms" | "otp";
 }
 
 export class NotificationQueue {
   private queueName: string;
   private processingQueueName: string;
   private deadLetterQueueName: string;
+  private type: "email" | "sms" | "otp";
+  private matricService: NotificationMetricsService;
 
-  constructor(type: string) {
+  constructor(type: "email" | "otp" | "sms") {
     this.queueName = `notificationQueue:${type}`;
     this.processingQueueName = `processingQueue:${type}`;
     this.deadLetterQueueName = `deadLetterQueue:${type}`;
+    this.type = type;
+    this.matricService = new NotificationMetricsService();
   }
   private extractActualPayload(item: QueueItem): any {
     let payload = item.payload;
@@ -61,9 +67,17 @@ export class NotificationQueue {
       }
     } catch (err) {
       console.error("Error updating MongoDB status to queue:", err);
+
+      await this.matricService.increamentSystemError(this.type, "ENQUE_ERROR");
+      throw err;
     }
 
     await redisClient.zadd(this.queueName, priority, JSON.stringify(item));
+    await this.matricService.incrementQueued(this.type);
+
+    const queueSize = await this.getlength();
+    await this.matricService.updateQueueSize(this.type, queueSize);
+
     console.log(
       `Added item ${id} to queue in ${this.queueName} with priority ${priority}`
     );
@@ -109,14 +123,29 @@ export class NotificationQueue {
         300
       );
 
+      await this.matricService.increamentPocessing(this.type);
+
+      const queueSize = await this.getlength();
+      await this.matricService.updateQueueSize(this.type, queueSize);
+
+      await Notification.updateOne(
+        { _id: cleanItem.payload.notificationId },
+        { $set: { status: "processing" } }
+      );
+
       return cleanItem;
     } catch (error) {
       console.error("Error dequeuing item:", error);
+      await this.matricService.increamentSystemError(
+        this.type,
+        "DEQUEUE_ERROR"
+      );
       return null;
     }
   }
 
   async complete(id: string): Promise<void> {
+    const startTime = Date.now();
     try {
       const itemJson = await redisClient.get(
         `${this.processingQueueName}:${id}`
@@ -133,6 +162,11 @@ export class NotificationQueue {
       // Clean up Redis
       await redisClient.del(`${this.processingQueueName}:${id}`);
       console.log(`Completed processing item ${id}`);
+
+      await this.matricService.increamentPocessing(this.type);
+
+      const queueSize = await this.getlength();
+      await this.matricService.updateQueueSize(this.type, queueSize);
 
       // Update MongoDB status
       const notificationId = payload?.notificationId || payload?._id;
@@ -152,6 +186,10 @@ export class NotificationQueue {
       }
     } catch (error) {
       console.error(`Error completing item ${id}:`, error);
+      await this.matricService.increamentSystemError(
+        this.type,
+        "COMPLETE_ERROR"
+      );
     }
   }
 
@@ -163,6 +201,12 @@ export class NotificationQueue {
     const newPriorityqueue = item.priority + Math.pow(2, item.retryCount); //check out this
     if (item.retryCount > 5) {
       await redisClient.lpush(this.deadLetterQueueName, JSON.stringify(item));
+
+      await this.matricService.increamentDeadLetter(this.type);
+
+      const queueSize = await this.getlength();
+      await this.matricService.updateDeadLetterQueueSize(this.type, queueSize);
+
       console.log(`Moved item ${item.id} to dead letter queue`);
 
       if (item.payload.notificationId || item.payload._id) {
@@ -178,6 +222,10 @@ export class NotificationQueue {
         JSON.stringify(item)
       );
       console.log(`Requeued item ${item.id} with priority ${newPriorityqueue}`);
+      await this.matricService.increamentPocessing(this.type);
+      //  not understand what to write here
+      const queueSize = await this.getlength();
+      await this.matricService.updateQueueSize(this.type, queueSize);
 
       if (item.payload.notificationId || item.payload._id) {
         await Notification.updateOne(
@@ -210,6 +258,14 @@ export class NotificationQueue {
         }
       }
     }
+    const queueSize = await this.getlength();
+    await this.matricService.updateQueueSize(this.type, queueSize);
+
+    const deadLetterSize = await redisClient.llen(this.deadLetterQueueName);
+    await this.matricService.updateDeadLetterQueueSize(
+      this.type,
+      deadLetterSize
+    );
 
     return recovered;
   }
@@ -217,4 +273,4 @@ export class NotificationQueue {
 export const emailQueue = new NotificationQueue("email");
 export const smsQueue = new NotificationQueue("sms");
 export const otpQueue = new NotificationQueue("otp");
-export const pushQueue = new NotificationQueue("push");
+// export const pushQueue = new NotificationQueue("push");
