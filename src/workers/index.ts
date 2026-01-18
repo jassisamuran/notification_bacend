@@ -7,7 +7,7 @@ import { getSocketIO } from "../../io";
 const calculateWorkerCount = () => {
   const cpucnt = os.cpus().length;
   return {
-    emailWorkers: Math.max(1, Math.floor(cpucnt * 0.8)),
+    emailWorkers: Math.max(1, Math.floor(cpucnt * 0.2)),
     smsWorkers: Math.max(1, Math.floor(cpucnt * 0.1)),
   };
 };
@@ -16,10 +16,13 @@ export function startWorkers() {
   if (cluster.isPrimary) {
     // In server.ts (inside cluster.isPrimary block)
     cluster.on("message", (worker, message: any) => {
+      console.log("check11", message);
       if (message.type === "socket_emit") {
         const io = getSocketIO();
         io?.emit(message.data.event, message.data.value);
+        console.log(")))))))");
       }
+      // next file
     });
 
     const counts = calculateWorkerCount();

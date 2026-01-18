@@ -1,8 +1,6 @@
+import { EventEmitter } from "events";
 import Redis from "ioredis";
 import redisClient from "../queues/redisClient";
-import { EventEmitter } from "events";
-import { timeStamp } from "console";
-import { pipeline } from "stream";
 class NotificationMetricsService extends EventEmitter {
   private redis: Redis;
   private metricsCache: Map<String, any> = new Map();
@@ -79,7 +77,7 @@ class NotificationMetricsService extends EventEmitter {
 
   async increamentSystemError(
     type: "email" | "sms" | "otp" | "push",
-    error: string
+    error: string,
   ) {
     const pipeline = this.redis.pipeline();
     const now = Date.now();
@@ -91,7 +89,7 @@ class NotificationMetricsService extends EventEmitter {
 
   async recordProcessingTime(
     type: "email" | "sms" | "otp" | "push",
-    timeMs: number
+    timeMs: number,
   ) {
     const key = `notifications:${type}:processing_times`;
     // Use a sorted set to track processing times (keep last 1000 entries)
@@ -105,13 +103,13 @@ class NotificationMetricsService extends EventEmitter {
 
   async processingQueueSize(
     type: "email" | "sms" | "otp" | "push",
-    size: number
+    size: number,
   ) {
     await this.redis.set(`notifications:${type}:processing_size`, size);
   }
   async updateDeadLetterQueueSize(
     type: "email" | "sms" | "otp" | "push",
-    size: number
+    size: number,
   ) {
     await this.redis.set(`notifications:${type}:deadletter_size`, size);
   }
@@ -132,7 +130,7 @@ class NotificationMetricsService extends EventEmitter {
       `nofification:${type}:processing_times`,
       -100,
       -1,
-      "WITHSCORES"
+      "WITHSCORES",
     );
     const results = await pipeline.exec();
 
@@ -206,7 +204,7 @@ class NotificationMetricsService extends EventEmitter {
 
   async incrementFailure(
     type: "email" | "sms" | "otp" | "push" = "email",
-    error?: string
+    error?: string,
   ) {
     const pipeline = this.redis.pipeline();
     const now = Date.now();

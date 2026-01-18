@@ -7,5 +7,10 @@ export const setSocketIO = (ioInstance: Server) => {
 };
 
 export const getSocketIO = () => {
+  if (!io) {
+    console.error(
+      "❌ Socket.IO is NOT initialized! You must call initSocketIO() first."
+    );
+  }
   return io;
 };

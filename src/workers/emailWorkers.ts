@@ -4,12 +4,15 @@ import { fakeEmailProvider } from "../providers/fakeEmailProvider";
 
 import Notification from "../../models/notificationSchema";
 import { getSocketIO } from "../../io";
+import NotificationMetricsService from "../services/NotificationMetricsService";
 let count = 0;
 export class EmailWorker {
   private running: boolean = false;
   private workerId: string;
+  private metricsService: NotificationMetricsService;
   constructor(workerId: string = "1") {
     this.workerId = `email-worker-${workerId}`;
+    this.metricsService = new NotificationMetricsService();
   }
   async start() {
     this.running = true;
@@ -30,12 +33,20 @@ export class EmailWorker {
             `${this.workerId} successfully send sms to ${item.payload.to}`
           );
 
+          const d = await this.metricsService.increamentSuccess("email");
+          // const metrics = await this.metricsService.getMetricsByType("email");
+
           count++;
           // io.emit("count", count);
-
+          console.log("hfsi");
           process.send?.({
             type: "socket_emit",
             data: { event: "count", value: count },
+            // next file
+          });
+          process.send?.({
+            type: "socket_emit",
+            data: { event: "success", value: d.message },
           });
         } else {
           console.warn(
