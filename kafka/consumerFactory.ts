@@ -1,11 +1,10 @@
-import { smsQueue } from "../src/queues/notificationQueue";
 import kafka from "./kafka";
 type MessageHandler = (message: any) => Promise<void>;
 type MessageFilter = (message: any) => boolean;
 export const createKafkaConsumer = async (
   groupId: string,
   filterFn: MessageFilter,
-  processFn: MessageHandler
+  processFn: MessageHandler,
 ) => {
   const consumer = kafka.consumer({
     groupId,
@@ -25,13 +24,13 @@ export const createKafkaConsumer = async (
         // Parse the message value
         const parsedMessage: any = JSON.parse(message.value.toString());
         console.log(`Received message in ${groupId}:`, parsedMessage);
-        // await smsQueue.enqueue(parsedMessage);
+
         // Apply the filter
         if (filterFn(parsedMessage)) {
           console.log(`Message matched filter for ${groupId}:`, parsedMessage);
           await processFn(parsedMessage);
         } else {
-          // console.log(`Message did not match filter for ${groupId}, skipping`);
+          console.log(`Message did not match filter for ${groupId}, skipping`);
         }
       } catch (error) {
         // console.error(`Error processing message in ${groupId}:`, error);

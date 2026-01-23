@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const MONDODB_URI = process.env.MONGODB_URI;
+const MONDODB_URI = "mongodb://localhost:27017";
 if (!MONDODB_URI) {
   throw new Error("MONGODB_URI environment variable is not defined");
 }
