@@ -10,3 +10,8 @@ export const EmailLogMessages = {
     `Failed to send email to ${to} : ${error}`,
   success: (to: string, id: string) => `Email sent to ${to}, message id ${id}`,
 };
+
+export const MONGODB = {
+  createdAndQueued: "Notification created and queued successfully",
+  error: "Something Went Wrong",
+};

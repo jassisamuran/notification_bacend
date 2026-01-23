@@ -1,5 +1,7 @@
 import { createKafkaConsumer } from "./consumerFactory";
-import { emailQueue, smsQueue } from "../src/queues/notificationQueue";
+
+import { smsQueue } from "../src/queues/notificationQueue";
+import { emailQueue } from "../src/queues/notificationQueue";
 interface Message {
   type: string;
   [key: string]: any;
@@ -16,7 +18,16 @@ const customerConfigs: CustomerConfig[] = [
     groupId: "email-group-service",
     filter: (message: Message) => message.type === "email",
     process: async (message: Message) => {
-      console.log("Processing email message:", message);
+      console.log("Processing email message:");
+      const queueId = await emailQueue.enqueue(message, 3);
+      console.log("id of emial queue is ", queueId);
+
+      console.log(
+        "Processing email message id :",
+        message,
+        message.notificationId
+      );
+
       await emailQueue.enqueue(message);
     },
   },
