@@ -10,3 +10,9 @@ export const EmailLogMessages = {
     `Failed to send email to ${to} : ${error}`,
   success: (to: string, id: string) => `Email sent to ${to}, message id ${id}`,
 };
+
+export const HealthChecks = {
+  FULFILLED: "fulfilled",
+  DISCONNECTED: "disconnected",
+  CONNECTED: "connected",
+};

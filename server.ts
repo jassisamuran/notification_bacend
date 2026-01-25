@@ -1,20 +1,18 @@
-import express from "express";
-import dotenv from "dotenv";
-dotenv.config();
+import cluster from "cluster";
 import cors from "cors";
-import routes from "./routes";
-import connectDb from "./modules/database/mongoose";
-import User from "./models/User";
-import { sendMessage, connectProducer } from "./kafka/producer";
-import startConsumer from "./kafka/consumer";
-import startKafkaConsumers from "./kafka/main";
+import dotenv from "dotenv";
+import express from "express";
 import http from "http";
 import { Server } from "socket.io";
+import startKafkaConsumers from "./kafka/main";
+import { connectProducer } from "./kafka/producer";
+import connectDb from "./modules/database/mongoose";
+import healthRoutes from "./src/routes/healthRoutes";
+import notificationRoutes from "./src/routes/notificationRoutes";
 import { startWorkers } from "./src/workers/index";
-import cluster from "cluster";
+dotenv.config();
 
 connectDb();
-import notificationRoutes from "./src/routes/notificationRoutes";
 const app = express();
 const PORT = process.env.PORT || 5000;
 app.use(cors());
@@ -39,6 +37,7 @@ io.on("connection", (socket) => {
   });
 });
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/health/check", healthRoutes);
 
 const start = async () => {
   try {
